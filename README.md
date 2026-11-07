@@ -1,48 +1,48 @@
 # sql-format-lint
 
-[![PyPI version](https://img.shields.io/pypi/v/trysac-sql-format-lint)](https://pypi.org/project/trysac-sql-format-lint/)
-[![License: MIT](https://img.shields.io/pypi/l/trysac-sql-format-lint)](LICENSE)
-[![CI](https://github.com/Trysac/u171-sql-format-lint/actions/workflows/ci.yml/badge.svg)](https://github.com/Trysac/u171-sql-format-lint/actions/workflows/ci.yml)
+SQL in repositories is often formatted by hand, leading to noisy diffs and missed query anti-patterns. Existing formatters often rely on regexes that break string literals, quoted identifiers, or dollar-quoted bodies.
 
-Format SQL deterministically with a quote-aware tokenizer, one clause per line and uppercase keywords, and lint queries for six common mistakes with line and column
+`sql-format-lint` provides a deterministic, quote-aware SQL tokenizer, an idempotent formatter that preserves tokens, and a linter for six common anti-patterns.
 
-## Problem
+## Installation
 
-Describe in two or three sentences the concrete problem this utility solves, who hits it, and what
-they do today without it. Replace this paragraph when the first real feature lands.
-
-## Install
-
-```sh
+```bash
 pip install trysac-sql-format-lint
-# or
-uv add trysac-sql-format-lint
 ```
-
-Requires Python 3.10 or newer. No runtime dependencies.
 
 ## Usage
 
 ```python
-import sql_format_lint
+import sql_format_lint as sql
 
-# normalize() trims surrounding whitespace and lower-cases the text.
-print(sql_format_lint.normalize("  Hello World "))  # -> "hello world"
-
-# Blank input is rejected explicitly instead of returning an empty string.
-try:
-    sql_format_lint.normalize("   ")
-except ValueError as exc:
-    print(f"rejected: {exc}")
+query = "select a,b from t where x=1 and y=2"
+formatted = sql.format_sql(query)
+findings = sql.lint(formatted)
+assert len(findings) == 0
 ```
 
-## Documentation
+## CLI
 
-- [Architecture](docs/ARCHITECTURE.md) and [decisions](docs/decisions/)
-- [Testing](docs/TESTING.md) and [security](docs/SECURITY.md)
-- [Project record](docs/PROJECT.md) and [stack](docs/STACK.md)
-- [Changelog](CHANGELOG.md) and [contributing guide](CONTRIBUTING.md)
+```bash
+# Format a query file
+python -m sql_format_lint format query.sql
 
-## License
+# Check if a file is formatted
+python -m sql_format_lint check query.sql
 
-[MIT](LICENSE) (c) 2026 Miguel Gomez
+# Lint query file for anti-patterns
+python -m sql_format_lint lint query.sql
+```
+
+## API Summary
+
+- `tokenize(sql, *, max_chars=1_000_000) -> list[Token]`: Tokenizes SQL. Raises `SqlError` for `input_too_large`, `unterminated_string`, `unterminated_comment`, `unterminated_quoted_ident`, `unterminated_dollar`, or `too_deep`.
+- `format_sql(sql, *, indent=2) -> str`: Returns deterministically formatted SQL. Clause-aware, token-preserving, and idempotent.
+- `lint(sql) -> list[Finding]`: Returns a list of violations for six rules.
+- `main(argv=None) -> int`: CLI entry point for `format`, `check`, and `lint` commands.
+
+## Why not sqlparse or sqlfluff?
+
+`sql-format-lint` has zero dependencies and is a provably token-preserving, idempotent formatter, whereas alternatives rely on complex parser logic that may not guarantee token stability.
+
+For more details, see [docs/SECURITY.md](docs/SECURITY.md).
