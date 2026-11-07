@@ -2,18 +2,12 @@
 
 ## Threat model
 
-`trysac-sql-format-lint` is a pure library without I/O. The main risks are:
+`sql-format-lint` is a pure Python library with no runtime dependencies and no I/O operations inside the formatting or linting functions.
 
-- **Supply chain**: a compromised dependency or CI action. Mitigation: no runtime dependencies,
-  Dependabot weekly updates, actions pinned to major versions, minimal workflow permissions.
-- **Leaked secrets**: tokens committed by mistake. Mitigation: `gitleaks` runs in the local gates
-  and in CI; `.env` files are git-ignored.
-- **Untrusted input**: callers may pass hostile strings. Mitigation: validate input and fail with
-  explicit exceptions; never `eval`, `exec` or deserialize untrusted data.
+- **Defended**: The package handles potentially hostile input by enforcing strict size (`max_chars`) and nesting depth (`max_depth`) limits. It avoids dangerous operations like `eval` or `exec`.
+- **Not defended**: The package does not perform semantic analysis or schema validation; it is a lexical and structural tool. Callers are responsible for the security context of the SQL queries themselves.
 
-## Publishing
+## Limits
 
-Releases are published to PyPI with trusted publishing (OIDC) when available, never with a
-long-lived token stored in the repository.
-
-To report a vulnerability, see [SECURITY.md](../SECURITY.md).
+- `max_chars`: Default limit is 1,000,000 characters. Exceeding this raises `SqlError('input_too_large')`.
+- `max_depth`: Default limit is 100 levels of nested parentheses. Exceeding this raises `SqlError('too_deep')`.
