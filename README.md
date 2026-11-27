@@ -6,8 +6,10 @@ SQL in repositories is often formatted by hand, leading to noisy diffs and misse
 
 ## Installation
 
+Not published to PyPI yet. Install it from GitHub:
+
 ```bash
-pip install trysac-sql-format-lint
+pip install "git+https://github.com/Trysac/u171-sql-format-lint"
 ```
 
 ## Usage
